@@ -5,6 +5,7 @@ from strategies import Candle, Order
 
 logger = logging.getLogger(__name__)
 
+
 class SimulatedBroker:
     def __init__(self, events_queue, commission: float = 0.001):
         self.events_queue = events_queue
@@ -23,6 +24,6 @@ class SimulatedBroker:
         # Simple simulation: use current candle's close price
         fill_price = self.current_candle.close
         commission = fill_price * order.size * self.commission_rate
-        
+
         fill = FillEvent(order=order, fill_price=fill_price, commission=commission)
         self.events_queue.put(fill)

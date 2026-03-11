@@ -2,6 +2,7 @@ import duckdb
 from strategies import Candle
 from .events import DataEvent
 
+
 class DuckDBDataHandler:
     def __init__(self, db_path: str, symbol: str, timeframe: str, events_queue):
         self.conn = duckdb.connect(db_path, read_only=True)
@@ -9,7 +10,7 @@ class DuckDBDataHandler:
         self.timeframe = timeframe
         self.events_queue = events_queue
         self.continue_backtest = True
-        
+
         # Load all data into a generator/iterator
         self.iterator = self._load_data()
 
@@ -22,16 +23,16 @@ class DuckDBDataHandler:
             ORDER BY timestamp ASC
         """
         df = self.conn.execute(query, [self.symbol, self.timeframe]).df()
-        
+
         for _, row in df.iterrows():
             yield Candle(
                 symbol=self.symbol,
-                timestamp=row['timestamp'],
-                open=float(row['open']),
-                high=float(row['high']),
-                low=float(row['low']),
-                close=float(row['close']),
-                volume=float(row['volume'])
+                timestamp=row["timestamp"],
+                open=float(row["open"]),
+                high=float(row["high"]),
+                low=float(row["low"]),
+                close=float(row["close"]),
+                volume=float(row["volume"]),
             )
 
     def stream_next_candle(self):

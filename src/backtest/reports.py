@@ -66,12 +66,12 @@ class ReportGenerator:
 
     @staticmethod
     def generate(
-        metrics: Dict, 
-        strategy_name: str, 
-        symbol: str, 
-        timeframe: str, 
+        metrics: Dict,
+        strategy_name: str,
+        symbol: str,
+        timeframe: str,
         initial_capital: float,
-        output_path: str = "report.html"
+        output_path: str = "report.html",
     ):
         template = Template(ReportGenerator.TEMPLATE)
         html_content = template.render(
@@ -79,10 +79,10 @@ class ReportGenerator:
             strategy_name=strategy_name,
             symbol=symbol,
             timeframe=timeframe,
-            initial_capital=initial_capital
+            initial_capital=initial_capital,
         )
-        
+
         with open(output_path, "w") as f:
             f.write(html_content)
-        
+
         return os.path.abspath(output_path)
