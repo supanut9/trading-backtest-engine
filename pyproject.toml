@@ -1,0 +1,44 @@
+[project]
+name = "trading-backtest-engine"
+version = "0.1.0"
+description = "Event-driven backtesting engine for trading strategies"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "trading-strategies",
+    "trading-data-pipeline",
+    "pandas>=2.2.0",
+    "duckdb>=1.1.0",
+    "rich>=13.7.0",
+    "polars>=1.0.0",
+    "jinja2>=3.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.gui-scripts]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/backtest"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.uv.sources]
+trading-strategies = { path = "../trading-strategies", editable = true }
+trading-data-pipeline = { path = "../trading-data-pipeline", editable = true }
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.1",
+    "pandas-stubs>=3.0.0.260204",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.5",
+]
