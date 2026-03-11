@@ -1,0 +1,31 @@
+[project]
+name = "trading-backtest-engine"
+version = "0.1.0"
+description = "Event-driven backtesting engine for trading strategies"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "trading-strategies @ file:///Users/supanut.tan/projects/supanut9/trading-strategies",
+    "trading-data-pipeline @ file:///Users/supanut.tan/projects/supanut9/trading-data-pipeline",
+    "pandas>=2.2.0",
+    "duckdb>=1.1.0",
+    "rich>=13.7.0",
+    "polars>=1.0.0",
+    "jinja2>=3.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.gui-scripts]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/backtest"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
