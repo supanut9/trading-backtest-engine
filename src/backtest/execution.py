@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 from .events import FillEvent
-from strategies import Candle, Order, OrderType
+from strategies import Candle, Order
 
 logger = logging.getLogger(__name__)
 

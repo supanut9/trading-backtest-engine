@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from strategies import Candle, Order, OrderSide, OrderType
+from strategies import Candle, Order, OrderSide
 
 
 class EventType(Enum):

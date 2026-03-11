@@ -1,6 +1,6 @@
 import queue
 import logging
-from typing import List, Optional
+from typing import Optional
 from rich.table import Table
 from rich.console import Console
 from .events import Event, EventType, DataEvent, SignalEvent, OrderEvent, FillEvent
