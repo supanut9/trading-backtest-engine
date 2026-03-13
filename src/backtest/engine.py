@@ -1,6 +1,6 @@
 import queue
 import logging
-from typing import Optional
+from typing import Optional, List, Dict
 from rich.table import Table
 from rich.console import Console
 from .events import Event, EventType, DataEvent, SignalEvent, OrderEvent, FillEvent
@@ -23,6 +23,7 @@ class BacktestEngine:
         self.data_handler: Optional[DuckDBDataHandler] = None
         self.execution_handler: Optional[SimulatedBroker] = None
         self.is_running = False
+        self.trades: List[Dict] = []
 
     def run(self):
         """Main event loop."""
@@ -55,7 +56,7 @@ class BacktestEngine:
             elif event.type == EventType.FILL:
                 self._handle_fill(event)
 
-        self._summary()
+        return self._summary()
 
     def _handle_data(self, event: DataEvent):
         """Forward data to strategy and execution."""
@@ -87,6 +88,18 @@ class BacktestEngine:
     def _handle_fill(self, event: FillEvent):
         """Update portfolio after order is filled."""
         self.portfolio.update_position(event.order, event.fill_price, event.commission)
+        
+        # Track trade
+        self.trades.append({
+            "timestamp": event.order.timestamp.isoformat() if event.order.timestamp else None,
+            "symbol": event.order.symbol,
+            "side": event.order.side.value,
+            "price": event.fill_price,
+            "size": event.order.size,
+            "commission": event.commission,
+            "value": event.order.size * event.fill_price
+        })
+        
         logger.info(
             f"FILL: {event.order.side} {event.order.symbol} @ {event.fill_price}"
         )
@@ -100,7 +113,10 @@ class BacktestEngine:
 
         if not metrics:
             print("No history recorded.")
-            return
+            return {}
+
+        # Add trades to metrics
+        metrics["trades"] = self.trades
 
         # CLI Table Summary
         console = Console()
@@ -113,6 +129,7 @@ class BacktestEngine:
         table.add_row("Sharpe Ratio", f"{metrics['sharpe_ratio']:.2f}")
         table.add_row("Final Equity", f"{metrics['final_equity']:.2f}")
         table.add_row("Peak Equity", f"{metrics['peak_equity']:.2f}")
+        table.add_row("Total Trades", f"{len(self.trades)}")
 
         console.print(table)
 
@@ -127,3 +144,5 @@ class BacktestEngine:
                 output_path="backtest_report.html",
             )
             logger.info(f"HTML Report generated at: {report_path}")
+
+        return metrics

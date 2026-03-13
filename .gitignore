@@ -31,3 +31,5 @@ htmlcov/
 
 # Reports
 reports/*.html
+*.log
+*.html
