@@ -7,8 +7,9 @@ import os
 from backtest.engine import BacktestEngine
 from backtest.data import DuckDBDataHandler
 from backtest.execution import SimulatedBroker
-from strategies.rule_based import SmaCrossStrategy, RSIStrategy, BreakoutStrategy, BollingerBandsStrategy
+from strategies.rule_based import SmaCrossStrategy, RSIStrategy, BreakoutStrategy, BollingerBandsStrategy, MACDStrategy
 from strategies.ml.ml_strategy import MLStrategy
+from strategies.ensemble import EnsembleStrategy
 from pipeline.collector import DataCollector
 from pipeline.db import TradingDB
 
@@ -34,7 +35,8 @@ class BacktestRequest(BaseModel):
 @app.post("/api/v1/backtest")
 async def run_backtest(req: BacktestRequest):
     # 1. Ensure data exists
-    db_path = "../trading-data-pipeline/data/trading.db"
+    # If running from src, we need to go up to प्रोजेक्ट root
+    db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../trading-data-pipeline/data/trading.db"))
     db = TradingDB(db_path=db_path)
     collector = DataCollector(exchange_id=req.exchange, db=db)
     
@@ -61,21 +63,38 @@ async def run_backtest(req: BacktestRequest):
     )
 
     # 3. Select Strategy
-    if req.strategy == "sma":
-        engine.strategy = SmaCrossStrategy(symbol=req.symbol)
-    elif req.strategy == "rsi":
-        engine.strategy = RSIStrategy(symbol=req.symbol)
-    elif req.strategy == "breakout":
-        engine.strategy = BreakoutStrategy(symbol=req.symbol)
-    elif req.strategy == "bollinger":
-        engine.strategy = BollingerBandsStrategy(symbol=req.symbol)
-    elif req.strategy == "ml":
-        model_path = "../trading-ml-lab/models/rf_latest.pkl"
-        if not os.path.exists(model_path):
-            raise HTTPException(status_code=404, detail="ML Model file not found. Please train a model first.")
-        engine.strategy = MLStrategy(symbol=req.symbol, model_path=model_path)
-    else:
-        raise HTTPException(status_code=400, detail=f"Unsupported strategy: {req.strategy}")
+    strategy_names = [s.strip().lower() for s in req.strategy.split(",")]
+    
+    def create_strategy(name, symbol):
+        if name == "sma" or name == "sma_cross":
+            return SmaCrossStrategy(symbol=symbol)
+        elif name == "rsi":
+            return RSIStrategy(symbol=symbol)
+        elif name == "breakout":
+            return BreakoutStrategy(symbol=symbol)
+        elif name == "bollinger":
+            return BollingerBandsStrategy(symbol=symbol)
+        elif name == "macd":
+            return MACDStrategy(symbol=symbol)
+        elif name == "ml":
+            model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../trading-ml-lab/models/rf_latest.pkl"))
+            if not os.path.exists(model_path):
+                raise HTTPException(status_code=404, detail="ML Model file not found. Please train a model first.")
+            return MLStrategy(symbol=symbol, model_path=model_path)
+        else:
+            raise HTTPException(status_code=400, detail=f"Unsupported strategy: {name}")
+
+    try:
+        instances = [create_strategy(name, req.symbol) for name in strategy_names]
+        
+        if len(instances) == 1:
+            engine.strategy = instances[0]
+        else:
+            engine.strategy = EnsembleStrategy(instances)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     # 4. Run
     try:
